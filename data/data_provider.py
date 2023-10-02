@@ -19,13 +19,15 @@ import shutil
 
 class dataloader_:
     def __init__(self, data_dir):
-        self.data_dir = '/home/mahshad/Documents/datasets/solar_cell_project/images'
+        self.data_dir = data_dir
 
+    pdb.set_trace()
     def __len__(self):
         return len(self.data_dir)
 
     def data_seperation(self, csv_path):
-        df = pd.read_csv('/home/mahshad/Documents/datasets/solar_cell_project/master_list_with_splits.csv')
+        self.csv_path = csv_path
+        df = pd.read_csv(csv_path, header = 1)
         for index, row in df.iterrows():
             image_name = row['filename']
             label_name = row['split']
@@ -56,6 +58,11 @@ class dataloader_:
         test_loader = torch.utils.data.Dataloader (test_dataset, batch_size = 64, shuffle = False)
 
         return train_loader, test_loader
+
+
+data_handler = dataloader_('/home/mahshad/Documents/datasets/solar_cell_project/images')
+data_handler.data_seperation('/home/mahshad/Documents/datasets/solar_cell_project/master_list_with_splits.csv')
+
 
 pdb.set_trace()
 # data_handler = dataloader_('/home/mahshad/Documents/datasets/solar_cell_project/images')
