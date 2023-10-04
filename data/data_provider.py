@@ -21,6 +21,7 @@ from config.serde import read_config
 import csv
 from sklearn.model_selection import train_test_split
 
+
 train_mean = [0.59685254, 0.59685254, 0.59685254]
 train_std = [0.16043035, 0.16043035, 0.16043035]
 epsilon = 1e-15
@@ -60,7 +61,11 @@ class mydataset(Dataset):
 
 
     def __len__(self):
-        pass
+        if self.input_list == self.train_list:
+            return len(self.train_list)
+        else:
+            return len(self.valid_list)
+    
 
 
 
