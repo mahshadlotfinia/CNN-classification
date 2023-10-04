@@ -20,6 +20,10 @@ from PIL import Image
 from config.serde import read_config
 import csv
 from sklearn.model_selection import train_test_split
+from Train_Test_Valid import Mode
+from skimage.io import imread
+from skimage.color import gray2rgb
+
 
 
 train_mean = [0.59685254, 0.59685254, 0.59685254]
@@ -27,12 +31,13 @@ train_std = [0.16043035, 0.16043035, 0.16043035]
 epsilon = 1e-15
 
 class mydataset(Dataset):
-    def __init__(self, data_input_path, CSV_input_path, valid_split_ration = 0.2,
-                 transform = transforms.Compose(transforms.ToTensor()), seed = 42):
+    def __init__(self, data_input_path, CSV_input_path, valid_split_ration,
+                 transform = transforms.Compose(transforms.ToTensor()), mode = Mode.Train, seed = 42):
 
         self.data_input_path = data_input_path
         self.CSV_input_path = CSV_input_path
         self.transform = transform
+        self.valid_split_ration = valid_split_ration
 
         self.input_list = []
         self.sum_crack = 0
@@ -51,8 +56,9 @@ class mydataset(Dataset):
                     )
 
                 for row in self.train_list:
-                    self.sum_crack += int [row('crack')]
-                    self.sum_inactive += int[row('inactive')]
+                    self.sum_crack += int(row['crack'])
+                    self.sum_inactive += int(row['inactive'])
+
 
 
         pass
@@ -65,18 +71,27 @@ class mydataset(Dataset):
             return len(self.train_list)
         else:
             return len(self.valid_list)
-    
 
 
 
 
+    def __getitem__(self, idx):
+        self.output_list = []
 
+        if self.mode == Mode.Train:
+            self.output_list = self.train_list
+        elif self.mode == Mode.Valid:
+            self.output_list = self.valid_list
 
+        label = np.zeros((2), dtype = int)
+        label[0] = int (self.output_list[idx]['crack'])
+        label[1] = int (self.output_list [idx] ['inactive'])
 
-
-
-    def __getitem__(self, item):
-        pass
+        image = imread(os.path.join(self.data_input_path), self.output_list[idx]['filename'])
+        image = gray2rgb(image)
+        image = self.transform(image)
+        label = torch.from_numpy(label)
+        return image, label
 
 
 
