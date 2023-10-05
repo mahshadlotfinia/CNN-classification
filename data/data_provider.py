@@ -31,13 +31,14 @@ train_std = [0.16043035, 0.16043035, 0.16043035]
 epsilon = 1e-15
 
 class mydataset(Dataset):
-    def __init__(self, data_input_path, CSV_input_path, valid_split_ration,
-                 transform = transforms.Compose(transforms.ToTensor()), mode = Mode.Train, seed = 42):
+    def __init__(self, data_input_path, CSV_input_path, valid_split_ration, mode = 'train',
+                 transform = transforms.Compose(transforms.ToTensor()), , seed = 42):
 
         self.data_input_path = data_input_path
         self.CSV_input_path = CSV_input_path
         self.transform = transform
         self.valid_split_ration = valid_split_ration
+        self.mode = mode
 
         self.input_list = []
         self.sum_crack = 0
@@ -61,9 +62,6 @@ class mydataset(Dataset):
 
 
 
-        pass
-
-
 
 
     def __len__(self):
@@ -78,9 +76,9 @@ class mydataset(Dataset):
     def __getitem__(self, idx):
         self.output_list = []
 
-        if self.mode == Mode.Train:
+        if self.mode == 'train':
             self.output_list = self.train_list
-        elif self.mode == Mode.Valid:
+        elif self.mode == 'valid':
             self.output_list = self.valid_list
 
         label = np.zeros((2), dtype = int)
@@ -94,11 +92,31 @@ class mydataset(Dataset):
         return image, label
 
 
+    def pos_weight(self):
+        W_crack = torch.tensor((len(self.train_list) - self.sum_crack) / (self.sum_crack + epsilon))
+        W_inactive = torch.tensor((len(self.train_list) - self.sum_inactive) / (self.sum_inactive + epsilon))
+        output_tensor = torch.zeros((2))
+        output_tensor[0] = W_crack
+        output_tensor[1] = W_inactive
 
+        return output_tensor
+
+def get_train_dataset(data_input_path, valid_split_ration):
+    trans = transforms.Compose ([transforms.ToPILImage(), transforms.RandomVerticalFlip(p = 0.5),
+                                transforms.RandomHorizontalFlip(p = 0.5), transforms.ToTensor(),
+                                transforms.Normalize(train_mean, train_std)])
+    return mydataset (data_input_path = data_input_path, valid_split_ration = valid_split_ration, transform = trans, mode = 'train')
+
+def get_validation_dataset(data_input_path, valid_split_ration):
+    trans = transforms.Compose ([transforms.ToPILImage(),
+                                transforms.ToTensor(),
+                                transforms.Normalize(train_mean, train_std)])
+    return mydataset (data_input_path = data_input_path, valid_split_ration = valid_split_ration, transform = trans, mode = 'Valid')
 
 
 if __name__ == '__main__':
-
-
-
+    DATA_PATH = '/home/mahshad/Documents/datasets/solar_cell_project/images'
+    train_dataset = get_train_dataset(DATA_PATH, valid_split_ration = 0.2)
+    valid_dataset = get_validation_dataset(DATA_PATH, valid_split_ration = 0.2)
+    # pdb.set_trace()
 
