@@ -32,7 +32,7 @@ epsilon = 1e-15
 
 class mydataset(Dataset):
     def __init__(self, data_input_path, CSV_input_path, valid_split_ration, mode = 'train',
-                 transform = transforms.Compose(transforms.ToTensor()), , seed = 42):
+                 transform = transforms.Compose(transforms.ToTensor()), seed = 42):
 
         self.data_input_path = data_input_path
         self.CSV_input_path = CSV_input_path
