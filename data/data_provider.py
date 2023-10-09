@@ -16,7 +16,7 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 from torchvision import transforms
 from Train_Test_Valid import Mode
-# from configs.serde import read_config
+from configs.serde import read_config
 import os.path
 import pdb
 train_mean = [0.59685254, 0.59685254, 0.59685254]
@@ -92,30 +92,37 @@ class mydataset(Dataset):
         return image, label
 
     def pos_weight(self):
-        W_crack = torch.tensor((len(self.train_list) - self.sum_crack) / (self.sum_crack + epsilon))
-        W_inactive = torch.tensor((len(self.train_list) - self.sum_inactive) / (self.sum_inactive + epsilon))
+        '''
+        Calculates a weight for positive examples for each class and returns it as a tensor
+        Only using the training set.
+        '''
+        w_crack = torch.tensor((len(self.train_list) - self.sum_crack) / (self.sum_crack + epsilon))
+        w_inactive = torch.tensor((len(self.train_list) - self.sum_inactive) / (self.sum_inactive + epsilon))
         output_tensor = torch.zeros((2))
-        output_tensor[0] = W_crack
-        output_tensor[1] = W_inactive
+        output_tensor[0] = w_crack
+        output_tensor[1] = w_inactive
 
         return output_tensor
 
-def get_train_dataset(data_input_path, valid_split_ration):
-    trans = transforms.Compose ([transforms.ToPILImage(), transforms.RandomVerticalFlip(p = 0.5),
-                                transforms.RandomHorizontalFlip(p = 0.5), transforms.ToTensor(),
-                                transforms.Normalize(train_mean, train_std)])
-    return mydataset (data_input_path = data_input_path, valid_split_ration = valid_split_ration, transform = trans, mode = 'train')
+def get_train_dataset(cfg_path, valid_split_ratio):
+        # since all the images are 300 * 300, we don't need resizing
+        trans = transforms.Compose([transforms.ToPILImage(), transforms.RandomVerticalFlip(p=0.5),
+                                    transforms.RandomHorizontalFlip(p=0.5), transforms.ToTensor(),
+                                    transforms.Normalize(train_mean, train_std)])
+        return mydataset(cfg_path=cfg_path,
+                                valid_split_ratio=valid_split_ratio, transform=trans, mode=Mode.TRAIN)
 
-def get_validation_dataset(data_input_path, valid_split_ration):
-    trans = transforms.Compose ([transforms.ToPILImage(),
-                                transforms.ToTensor(),
-                                transforms.Normalize(train_mean, train_std)])
-    return mydataset (data_input_path = data_input_path, valid_split_ration = valid_split_ration, transform = trans, mode = 'Valid')
-
+    # without augmentation
+def get_validation_dataset(cfg_path, valid_split_ratio):
+        trans = transforms.Compose([transforms.ToPILImage(), transforms.ToTensor(),
+                                    transforms.Normalize(train_mean, train_std)])
+        return mydataset(cfg_path=cfg_path,
+                                valid_split_ratio=valid_split_ratio, transform=trans, mode=Mode.VALID)
 
 if __name__ == '__main__':
-    DATA_PATH = '/home/mahshad/Documents/datasets/solar_cell_project/images'
-    train_dataset = get_train_dataset(DATA_PATH, valid_split_ration = 0.2)
-    valid_dataset = get_validation_dataset(DATA_PATH, valid_split_ration = 0.2)
+    CONFIG_PATH = '/home/soroosh/Documents/Repositories/deep_learning_challenge/configs/config.json'
+    train_dataset = get_train_dataset(CONFIG_PATH, valid_split_ratio=0.2)
+    valid_dataset = get_validation_dataset(CONFIG_PATH, valid_split_ratio=0.2)
     # pdb.set_trace()
+    # a=5
 
